@@ -6,7 +6,9 @@ const nextConfig: NextConfig = {
 
   images: {
     unoptimized: true,
-  }
+  },
+  basePath: '/PI-efa',
+  assetPrefix: '/PI-efa',
 };
 
 export default nextConfig;
