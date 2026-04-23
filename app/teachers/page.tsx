@@ -130,8 +130,8 @@ export default function TeachersPage() {
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold tracking-tight">Corpo Docente</h1>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button onClick={() => handleOpenDialog()}>Adicionar Professor</Button>
+                    <DialogTrigger render={<Button onClick={() => handleOpenDialog()} />}>
+                        Adicionar Professor
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[95vw] w-[95vw] h-[95vh] overflow-y-auto overflow-x-hidden">
                         <DialogHeader>

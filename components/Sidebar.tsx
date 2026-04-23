@@ -8,7 +8,7 @@ import { BookOpen, Users, Building, Settings as SettingsIcon } from "lucide-reac
 const navItems = [
     { href: "/subjects", label: "Matérias", icon: BookOpen },
     { href: "/teachers", label: "Professores", icon: Users },
-    { href: "/classrooms", label: "Salas de Aula", icon: Building },
+    { href: "/classrooms", label: "Turmas", icon: Building },
     { href: "/settings", label: "Configurações", icon: SettingsIcon },
 ];
 

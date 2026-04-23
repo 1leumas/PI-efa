@@ -50,11 +50,9 @@ export default function SubjectsPage() {
                 <h1 className="text-3xl font-bold tracking-tight">Matérias</h1>
 
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Adicionar Matéria
-                        </Button>
+                    <DialogTrigger render={<Button />}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Adicionar Matéria
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-106.25">
                         <DialogHeader>
