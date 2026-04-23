@@ -5,8 +5,9 @@ import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { Moon, Sun, Download, Upload } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { useEffect, useState, useRef } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "./ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { generateTimetable } from "@/lib/generator";
 
 export function Header() {
@@ -15,6 +16,10 @@ export function Header() {
 
     const state = useTimetableStore();
     const { settings, subjects, classrooms, teachers } = state;
+
+    const [isImportModalOpen, setImportModalOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [importFile, setImportFile] = useState<File | null>(null);
 
     useEffect(() => {
         setMounted(true);
@@ -57,6 +62,26 @@ export function Header() {
         toast.success("Dados exportados!");
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setImportFile(e.target.files[0]);
+        }
+    };
+
+    const handleImport = async (mode: 'replace' | 'merge') => {
+        if (!importFile) return;
+        try {
+            const text = await importFile.text();
+            const data = JSON.parse(text);
+            state.importData(data, mode);
+            toast.success(`Dados importados com sucesso (${mode === 'replace' ? 'Substituído' : 'Mesclado'})!`);
+            setImportModalOpen(false);
+            setImportFile(null);
+        } catch(err) {
+            toast.error("Erro ao ler o arquivo. Certifique-se de que é um JSON válido.");
+        }
+    };
+
     return (
         <header className="h-14 flex items-center justify-between border-b px-6 bg-background">
             <div className="flex items-center md:hidden">
@@ -69,11 +94,75 @@ export function Header() {
                     <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                     <span className="sr-only">Alternar tema</span>
                 </Button>
-                <Button variant="outline" onClick={handleExport}>
-                    <Download className="mr-2 h-4 w-4" /> Exportar
-                </Button>
+                
+                <DropdownMenu>
+                    <DropdownMenuTrigger render={<Button variant="outline" />}>
+                        <Download className="mr-2 h-4 w-4" /> Dados
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleExport} className="cursor-pointer">
+                            <Download className="mr-2 h-4 w-4" />
+                            Exportar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setImportModalOpen(true)} className="cursor-pointer">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Importar
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
                 <Button onClick={handleGenerate}>Gerar Tabela de Horários</Button>
             </div>
+
+            <Dialog open={isImportModalOpen} onOpenChange={(open) => { setImportModalOpen(open); if (!open) setImportFile(null); }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Importar Dados</DialogTitle>
+                        <DialogDescription>
+                            Selecione um arquivo JSON de backup para importar as configurações, disciplinas, turmas e professores.
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="py-4 space-y-4">
+                        <div className="flex flex-col gap-2">
+                            <input 
+                                type="file" 
+                                accept=".json" 
+                                ref={fileInputRef} 
+                                onChange={handleFileChange} 
+                                className="hidden" 
+                            />
+                            <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
+                                {importFile ? importFile.name : "Selecionar Arquivo JSON"}
+                            </Button>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 sm:justify-between items-center">
+                        <Button variant="ghost" onClick={() => setImportModalOpen(false)} className="w-full sm:w-auto">
+                            Cancelar
+                        </Button>
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <Button 
+                                variant="destructive" 
+                                disabled={!importFile} 
+                                onClick={() => handleImport('replace')}
+                                className="w-full sm:w-auto bg-destructive/90 text-white"
+                            >
+                                Substituir Tudo
+                            </Button>
+                            <Button 
+                                variant="secondary" 
+                                disabled={!importFile} 
+                                onClick={() => handleImport('merge')}
+                                className="w-full sm:w-auto"
+                            >
+                                Mesclar
+                            </Button>
+                        </div>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </header>
     );
 }

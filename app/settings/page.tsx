@@ -34,15 +34,6 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="duration">Duração de cada aula (Minutos)</Label>
-                        <Input
-                            id="duration"
-                            type="number"
-                            value={localSettings.classDurationMinutes}
-                            onChange={(e) => setLocalSettings({ ...localSettings, classDurationMinutes: Number(e.target.value) })}
-                        />
-                    </div>
-                    <div className="grid gap-2">
                         <Label htmlFor="classes.per.day">Quantidade de aulas por dia</Label>
                         <Input
                             id="classes.per.day"

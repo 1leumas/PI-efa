@@ -1,5 +1,4 @@
 export interface Settings {
-    classDurationMinutes: number;
     classesPerDay: number;
     daysPerWeek: number; // e.g., 5 for Mon-Fri
 }

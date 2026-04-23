@@ -3,7 +3,6 @@ import { persist } from 'zustand/middleware';
 import { TimetableState, Settings, Subject, Classroom, Teacher } from '@/lib/types';
 
 const defaultSettings: Settings = {
-    classDurationMinutes: 50,
     classesPerDay: 5,
     daysPerWeek: 5,
 };
