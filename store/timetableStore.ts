@@ -5,6 +5,8 @@ import { TimetableState, Settings, Subject, Classroom, Teacher } from '@/lib/typ
 const defaultSettings: Settings = {
     classesPerDay: 5,
     daysPerWeek: 5,
+    maxClassesPerSubjectPerDay: 2,
+    integralShiftPriority: 'Manhã',
 };
 
 export const useTimetableStore = create<TimetableState>()(
@@ -39,6 +41,9 @@ export const useTimetableStore = create<TimetableState>()(
             addTeacher: (teacher) => set((state) => ({ teachers: [...state.teachers, teacher] })),
             updateTeacher: (id, teacher) => set((state) => ({ teachers: state.teachers.map((t) => t.id === id ? { ...t, ...teacher } : t) })),
             deleteTeacher: (id) => set((state) => ({ teachers: state.teachers.filter((t) => t.id !== id) })),
+
+            timetableResult: null,
+            setTimetableResult: (result) => set({ timetableResult: result }),
 
             importData: (data, mode) => {
                 if (mode === 'replace') {

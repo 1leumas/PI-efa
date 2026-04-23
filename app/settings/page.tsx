@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -51,6 +52,31 @@ export default function SettingsPage() {
                             value={localSettings.daysPerWeek}
                             onChange={(e) => setLocalSettings({ ...localSettings, daysPerWeek: Number(e.target.value) })}
                         />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="max.classes.per.subject">Máximo de aulas da mesma matéria por dia (Para uma turma)</Label>
+                        <Input
+                            id="max.classes.per.subject"
+                            type="number"
+                            min={1}
+                            value={localSettings.maxClassesPerSubjectPerDay || 2}
+                            onChange={(e) => setLocalSettings({ ...localSettings, maxClassesPerSubjectPerDay: Number(e.target.value) })}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Prioridade de preenchimento (Turmas Integrais)</Label>
+                        <Select 
+                            value={localSettings.integralShiftPriority || 'Manhã'} 
+                            onValueChange={(v) => { if (v) setLocalSettings({ ...localSettings, integralShiftPriority: v as 'Manhã' | 'Tarde' })}}
+                        >
+                            <SelectTrigger className="bg-background w-full">
+                                <SelectValue placeholder="Selecione a prioridade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Manhã">Preencher Manhã primeiro</SelectItem>
+                                <SelectItem value="Tarde">Preencher Tarde primeiro</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <Button onClick={handleSave}>Salvar Configurações</Button>
                 </CardContent>

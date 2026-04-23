@@ -1,6 +1,8 @@
 export interface Settings {
     classesPerDay: number;
     daysPerWeek: number; // e.g., 5 for Mon-Fri
+    maxClassesPerSubjectPerDay: number;
+    integralShiftPriority?: 'Manhã' | 'Tarde';
 }
 
 export interface Subject {
@@ -14,9 +16,12 @@ export interface ClassroomSubject {
     weeklyClasses: number;
 }
 
+export type ShiftType = 'Manhã' | 'Tarde' | 'Integral';
+
 export interface Classroom {
     id: string;
     name: string;
+    shift: ShiftType;
     subjects: ClassroomSubject[];
 }
 
@@ -31,6 +36,7 @@ export interface Teacher {
     allowedSubjectIds: string[]; // which subjects they can teach
     subjectPriorityIds: string[]; // subjects they prefer to teach (ordered)
     maxWeeklyClasses: number;
+    canTeachAfternoon?: boolean; // simple flag for afternoon availability
     unavailableConstraints: TeacherTimeConstraint[]; // when they cannot teach
 }
 
@@ -55,6 +61,9 @@ export interface TimetableState {
     updateTeacher: (id: string, teacher: Partial<Teacher>) => void;
     deleteTeacher: (id: string) => void;
 
-    importData: (data: Omit<TimetableState, 'updateSettings' | 'addSubject' | 'updateSubject' | 'deleteSubject' | 'addClassroom' | 'updateClassroom' | 'deleteClassroom' | 'addTeacher' | 'updateTeacher' | 'deleteTeacher' | 'importData' | 'resetData'>, mode: 'replace' | 'merge') => void;
+    timetableResult: any[] | null;
+    setTimetableResult: (result: any[] | null) => void;
+
+    importData: (data: Omit<TimetableState, 'updateSettings' | 'addSubject' | 'updateSubject' | 'deleteSubject' | 'addClassroom' | 'updateClassroom' | 'deleteClassroom' | 'addTeacher' | 'updateTeacher' | 'deleteTeacher' | 'importData' | 'resetData' | 'timetableResult' | 'setTimetableResult'>, mode: 'replace' | 'merge') => void;
     resetData: () => void;
 }

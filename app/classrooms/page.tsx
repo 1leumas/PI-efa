@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
-import { Classroom, ClassroomSubject } from "@/lib/types";
+import { Classroom, ClassroomSubject, ShiftType } from "@/lib/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function ClassroomsPage() {
     const { classrooms, subjects, addClassroom, updateClassroom, deleteClassroom } = useTimetableStore();
@@ -23,8 +25,9 @@ export default function ClassroomsPage() {
 
     const [formData, setFormData] = useState<{
         name: string;
+        shift: ShiftType;
         selectedSubjects: Map<string, number>;
-    }>({ name: "", selectedSubjects: new Map() });
+    }>({ name: "", shift: "Manhã", selectedSubjects: new Map() });
 
     useEffect(() => setMounted(true), []);
 
@@ -33,10 +36,10 @@ export default function ClassroomsPage() {
             setEditingId(classroom.id);
             const subjectsMap = new Map<string, number>();
             classroom.subjects.forEach((s) => subjectsMap.set(s.subjectId, s.weeklyClasses));
-            setFormData({ name: classroom.name, selectedSubjects: subjectsMap });
+            setFormData({ name: classroom.name, shift: classroom.shift || "Manhã", selectedSubjects: subjectsMap });
         } else {
             setEditingId(null);
-            setFormData({ name: "", selectedSubjects: new Map() });
+            setFormData({ name: "", shift: "Manhã", selectedSubjects: new Map() });
         }
         setIsDialogOpen(true);
     };
@@ -49,10 +52,10 @@ export default function ClassroomsPage() {
         );
 
         if (editingId) {
-            updateClassroom(editingId, { name: formData.name, subjects: subjectsArray });
+            updateClassroom(editingId, { name: formData.name, shift: formData.shift, subjects: subjectsArray });
             toast.success("Turma atualizada!");
         } else {
-            addClassroom({ id: uuidv4(), name: formData.name, subjects: subjectsArray });
+            addClassroom({ id: uuidv4(), name: formData.name, shift: formData.shift, subjects: subjectsArray });
             toast.success("Turma criada!");
         }
         setIsDialogOpen(false);
@@ -91,9 +94,30 @@ export default function ClassroomsPage() {
                             <DialogTitle>{editingId ? "Editar Turma" : "Nova Turma"}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-6 py-4">
-                            <div className="space-y-2">
-                                <Label className="text-base font-semibold">Nome da Turma</Label>
-                                <Input placeholder="Ex: 1º Ano A" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-base font-semibold">Nome da Turma</Label>
+                                    <Input placeholder="Ex: 1º Ano A" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-base font-semibold">Turno</Label>
+                                    <Select value={formData.shift} onValueChange={(v) => { if (v) setFormData({ ...formData, shift: v as ShiftType }); }}>
+                                        <SelectTrigger className="w-full bg-background" size="default">
+                                            <SelectValue placeholder="Selecione o turno" />
+                                        </SelectTrigger>
+                                        <SelectContent 
+                                            className="z-[200] max-h-56 bg-popover text-popover-foreground shadow-md w-(--anchor-width) origin-top" 
+                                            side="bottom" 
+                                            align="start" 
+                                            sideOffset={4} 
+                                            alignItemWithTrigger={false}
+                                        >
+                                            <SelectItem value="Manhã">Manhã</SelectItem>
+                                            <SelectItem value="Tarde">Tarde</SelectItem>
+                                            <SelectItem value="Integral">Integral</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                             <div className="space-y-4">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -123,17 +147,17 @@ export default function ClassroomsPage() {
                                                     {isSelected && (
                                                         <div className="mt-4 flex items-center justify-between pl-7">
                                                             <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Aulas/Semana</span>
-                                                            <div className="flex items-center shadow-sm">
-                                                                <Button type="button" variant="outline" size="icon" className="h-7 w-7 rounded-r-none" onClick={() => updateWeeklyClasses(subject.id, Math.max(1, classesCount - 1))}>-</Button>
+                                                            <div className="flex items-center rounded-md border shadow-sm outline-none overflow-hidden bg-background">
+                                                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-none border-r" onClick={() => updateWeeklyClasses(subject.id, Math.max(1, classesCount - 1))}>-</Button>
                                                                 <Input
                                                                     id={`classes-${subject.id}`}
                                                                     type="number"
                                                                     min={1}
-                                                                    className="w-12 h-7 rounded-none border-x-0 text-center text-sm focus-visible:ring-0 focus-visible:ring-offset-0 px-1 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                                                                    className="w-12 h-7 rounded-none border-0 text-center text-sm focus-visible:ring-0 focus-visible:ring-offset-0 px-1 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] bg-transparent"
                                                                     value={classesCount}
                                                                     onChange={(e) => updateWeeklyClasses(subject.id, parseInt(e.target.value) || 1)}
                                                                 />
-                                                                <Button type="button" variant="outline" size="icon" className="h-7 w-7 rounded-l-none" onClick={() => updateWeeklyClasses(subject.id, classesCount + 1)}>+</Button>
+                                                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-none border-l" onClick={() => updateWeeklyClasses(subject.id, classesCount + 1)}>+</Button>
                                                             </div>
                                                         </div>
                                                     )}
@@ -166,6 +190,7 @@ export default function ClassroomsPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
+                            <p className="text-sm font-medium pb-2 text-primary">{c.shift || 'Manhã'}</p>
                             <p className="text-sm text-muted-foreground">{c.subjects.length} matérias cadastradas.</p>
                         </CardContent>
                     </Card>

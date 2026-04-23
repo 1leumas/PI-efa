@@ -1,0 +1,287 @@
+{
+  "settings": {
+    "classesPerDay": 5,
+    "daysPerWeek": 5,
+    "maxClassesPerSubjectPerDay": 2
+  },
+  "subjects": [
+    {
+      "id": "sub-mat",
+      "name": "Matemática"
+    },
+    {
+      "id": "sub-por",
+      "name": "Português"
+    },
+    {
+      "id": "sub-his",
+      "name": "História"
+    },
+    {
+      "id": "sub-geo",
+      "name": "Geografia"
+    },
+    {
+      "id": "sub-cie",
+      "name": "Ciências"
+    },
+    {
+      "id": "sub-ing",
+      "name": "Inglês"
+    },
+    {
+      "id": "sub-edf",
+      "name": "Educação Física"
+    }
+  ],
+  "classrooms": [
+    {
+      "id": "class-101",
+      "name": "101 (Manhã)",
+      "shift": "Manhã",
+      "subjects": [
+        {
+          "subjectId": "sub-mat",
+          "weeklyClasses": 5
+        },
+        {
+          "subjectId": "sub-por",
+          "weeklyClasses": 5
+        },
+        {
+          "subjectId": "sub-his",
+          "weeklyClasses": 3
+        },
+        {
+          "subjectId": "sub-geo",
+          "weeklyClasses": 3
+        },
+        {
+          "subjectId": "sub-cie",
+          "weeklyClasses": 4
+        },
+        {
+          "subjectId": "sub-ing",
+          "weeklyClasses": 3
+        },
+        {
+          "subjectId": "sub-edf",
+          "weeklyClasses": 2
+        }
+      ]
+    },
+    {
+      "id": "class-102",
+      "name": "102 (Manhã)",
+      "shift": "Manhã",
+      "subjects": [
+        {
+          "subjectId": "sub-mat",
+          "weeklyClasses": 5
+        },
+        {
+          "subjectId": "sub-por",
+          "weeklyClasses": 5
+        },
+        {
+          "subjectId": "sub-his",
+          "weeklyClasses": 3
+        },
+        {
+          "subjectId": "sub-geo",
+          "weeklyClasses": 3
+        },
+        {
+          "subjectId": "sub-cie",
+          "weeklyClasses": 4
+        },
+        {
+          "subjectId": "sub-ing",
+          "weeklyClasses": 3
+        },
+        {
+          "subjectId": "sub-edf",
+          "weeklyClasses": 2
+        }
+      ]
+    },
+    {
+      "id": "class-201",
+      "name": "201 (Tarde)",
+      "shift": "Tarde",
+      "subjects": [
+        {
+          "subjectId": "sub-mat",
+          "weeklyClasses": 5
+        },
+        {
+          "subjectId": "sub-por",
+          "weeklyClasses": 5
+        },
+        {
+          "subjectId": "sub-his",
+          "weeklyClasses": 3
+        },
+        {
+          "subjectId": "sub-geo",
+          "weeklyClasses": 3
+        },
+        {
+          "subjectId": "sub-cie",
+          "weeklyClasses": 4
+        },
+        {
+          "subjectId": "sub-ing",
+          "weeklyClasses": 3
+        },
+        {
+          "subjectId": "sub-edf",
+          "weeklyClasses": 2
+        }
+      ]
+    },
+    {
+      "id": "class-301",
+      "name": "301 (Integral)",
+      "shift": "Integral",
+      "subjects": [
+        {
+          "subjectId": "sub-mat",
+          "weeklyClasses": 10
+        },
+        {
+          "subjectId": "sub-por",
+          "weeklyClasses": 10
+        },
+        {
+          "subjectId": "sub-his",
+          "weeklyClasses": 6
+        },
+        {
+          "subjectId": "sub-geo",
+          "weeklyClasses": 6
+        },
+        {
+          "subjectId": "sub-cie",
+          "weeklyClasses": 8
+        },
+        {
+          "subjectId": "sub-ing",
+          "weeklyClasses": 6
+        },
+        {
+          "subjectId": "sub-edf",
+          "weeklyClasses": 4
+        }
+      ]
+    }
+  ],
+  "teachers": [
+    {
+      "id": "prof-1",
+      "name": "Jonas (Mat/Cie)",
+      "maxWeeklyClasses": 40,
+      "canTeachAfternoon": true,
+      "allowedSubjectIds": [
+        "sub-mat",
+        "sub-cie"
+      ],
+      "subjectPriorityIds": [
+        "sub-mat",
+        "sub-cie"
+      ],
+      "unavailableConstraints": [
+        {
+          "dayOfWeek": 2,
+          "periods": [
+            0,
+            1,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "id": "prof-2",
+      "name": "Maria (Port/Ing)",
+      "maxWeeklyClasses": 44,
+      "canTeachAfternoon": true,
+      "allowedSubjectIds": [
+        "sub-por",
+        "sub-ing"
+      ],
+      "subjectPriorityIds": [
+        "sub-por",
+        "sub-ing"
+      ],
+      "unavailableConstraints": []
+    },
+    {
+      "id": "prof-3",
+      "name": "Pedro (Hist/Geo)",
+      "maxWeeklyClasses": 40,
+      "canTeachAfternoon": true,
+      "allowedSubjectIds": [
+        "sub-his",
+        "sub-geo"
+      ],
+      "subjectPriorityIds": [
+        "sub-his",
+        "sub-geo"
+      ],
+      "unavailableConstraints": [
+        {
+          "dayOfWeek": 5,
+          "periods": [
+            5,
+            6,
+            7,
+            8,
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "id": "prof-4",
+      "name": "Ana (Mat/EdF)",
+      "maxWeeklyClasses": 30,
+      "canTeachAfternoon": true,
+      "allowedSubjectIds": [
+        "sub-mat",
+        "sub-edf"
+      ],
+      "subjectPriorityIds": [
+        "sub-mat",
+        "sub-edf"
+      ],
+      "unavailableConstraints": []
+    },
+    {
+      "id": "prof-5",
+      "name": "Carlos (Port/Cie)",
+      "maxWeeklyClasses": 30,
+      "canTeachAfternoon": true,
+      "allowedSubjectIds": [
+        "sub-por",
+        "sub-cie"
+      ],
+      "subjectPriorityIds": [
+        "sub-por",
+        "sub-cie"
+      ],
+      "unavailableConstraints": [
+        {
+          "dayOfWeek": 3,
+          "periods": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      ]
+    }
+  ]
+}

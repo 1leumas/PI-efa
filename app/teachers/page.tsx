@@ -9,6 +9,8 @@ import { Pencil, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,9 +26,10 @@ export default function TeachersPage() {
     const [formData, setFormData] = useState<{
         name: string;
         maxWeeklyClasses: number;
+        canTeachAfternoon: boolean;
         allowedSubjectIds: string[];
         unavailableConstraints: TeacherTimeConstraint[];
-    }>({ name: "", maxWeeklyClasses: 20, allowedSubjectIds: [], unavailableConstraints: [] });
+    }>({ name: "", maxWeeklyClasses: 20, canTeachAfternoon: false, allowedSubjectIds: [], unavailableConstraints: [] });
 
     useEffect(() => setMounted(true), []);
 
@@ -36,12 +39,13 @@ export default function TeachersPage() {
             setFormData({
                 name: teacher.name,
                 maxWeeklyClasses: teacher.maxWeeklyClasses,
+                canTeachAfternoon: !!teacher.canTeachAfternoon,
                 allowedSubjectIds: [...(teacher.allowedSubjectIds || [])],
                 unavailableConstraints: teacher.unavailableConstraints ? JSON.parse(JSON.stringify(teacher.unavailableConstraints)) : [],
             });
         } else {
             setEditingId(null);
-            setFormData({ name: "", maxWeeklyClasses: 20, allowedSubjectIds: [], unavailableConstraints: [] });
+            setFormData({ name: "", maxWeeklyClasses: 20, canTeachAfternoon: false, allowedSubjectIds: [], unavailableConstraints: [] });
         }
         setIsDialogOpen(true);
     };
@@ -71,6 +75,31 @@ export default function TeachersPage() {
             } else {
                 return { ...prev, allowedSubjectIds: [...allowed, subjectId] };
             }
+        });
+    };
+
+    const toggleFullDay = (dayValue: number) => {
+        setFormData(prev => {
+            const existing = prev.unavailableConstraints.find(c => c.dayOfWeek === dayValue);
+            const totalPeriods = settings.classesPerDay;
+            
+            // if all are unavailable, make them all available.
+            if (existing && existing.periods.length === totalPeriods) {
+                return {
+                    ...prev,
+                    unavailableConstraints: prev.unavailableConstraints.filter(c => c.dayOfWeek !== dayValue)
+                };
+            }
+            
+            // otherwise, make them all unavailable.
+            const allPeriods = Array.from({ length: totalPeriods }, (_, i) => i);
+            const newConstraints = prev.unavailableConstraints.filter(c => c.dayOfWeek !== dayValue);
+            newConstraints.push({ dayOfWeek: dayValue, periods: allPeriods });
+            
+            return {
+                ...prev,
+                unavailableConstraints: newConstraints
+            };
         });
     };
 
@@ -138,7 +167,7 @@ export default function TeachersPage() {
                             <DialogTitle>{editingId ? "Editar Professor" : "Novo Professor"}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-6 py-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
                                     <Label>Nome</Label>
                                     <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
@@ -146,6 +175,17 @@ export default function TeachersPage() {
                                 <div className="space-y-2">
                                     <Label>Máximo de Aulas / Semana</Label>
                                     <Input type="number" min="1" value={formData.maxWeeklyClasses} onChange={e => setFormData({ ...formData, maxWeeklyClasses: parseInt(e.target.value) || 20 })} />
+                                </div>
+                                <div className="space-y-2 flex flex-col justify-center">
+                                    <Label>Tempo Integral</Label>
+                                    <div className="flex items-center space-x-2 pt-2">
+                                        <Checkbox 
+                                            id="can-teach-afternoon" 
+                                            checked={formData.canTeachAfternoon} 
+                                            onCheckedChange={(c) => setFormData({ ...formData, canTeachAfternoon: !!c })} 
+                                        />
+                                        <Label htmlFor="can-teach-afternoon" className="cursor-pointer font-normal text-sm">Pode lecionar à tarde</Label>
+                                    </div>
                                 </div>
                             </div>
 
@@ -157,30 +197,35 @@ export default function TeachersPage() {
                                         {subjects.length === 0 ? (
                                             <p className="text-sm text-muted-foreground">Nenhuma disciplina cadastrada.</p>
                                         ) : (
-                                            <div className="grid grid-cols-1 gap-4 border p-4 rounded-md max-h-48 overflow-y-auto">
-                                                {subjects.map((subject) => (
-                                                    <div key={subject.id} className="flex items-center space-x-2">
-                                                        <Checkbox
-                                                            id={`subject-${subject.id}`}
-                                                            checked={formData.allowedSubjectIds.includes(subject.id)}
-                                                            onCheckedChange={() => toggleSubject(subject.id)}
-                                                        />
-                                                        <Label htmlFor={`subject-${subject.id}`} className="font-normal cursor-pointer">
-                                                            {subject.name}
-                                                        </Label>
-                                                    </div>
-                                                ))}
+                                            <div className="grid grid-cols-1 gap-4 p-4 rounded-md max-h-48">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger render={<Button variant="outline" className="w-full justify-between bg-background" />}>
+                                                        Selecionar Disciplinas ({formData.allowedSubjectIds.length})
+                                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent className="w-56" align="start">
+                                                        {subjects.map((subject) => (
+                                                            <DropdownMenuCheckboxItem
+                                                                key={subject.id}
+                                                                checked={formData.allowedSubjectIds.includes(subject.id)}
+                                                                onCheckedChange={() => toggleSubject(subject.id)}
+                                                            >
+                                                                {subject.name}
+                                                            </DropdownMenuCheckboxItem>
+                                                        ))}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </div>
                                         )}
                                     </div>
                                     <div className="space-y-3">
                                         <Label className="text-sm text-muted-foreground">Ordem de Prioridade:</Label>
                                         {formData.allowedSubjectIds.length === 0 ? (
-                                            <div className="border border-dashed rounded-md p-4 text-center text-sm text-muted-foreground h-full flex items-center justify-center">
+                                            <div className="border border-dashed rounded-md p-4 text-center text-sm text-muted-foreground h-48 flex items-center justify-center">
                                                 Selecione disciplinas ao lado para definir prioridade.
                                             </div>
                                         ) : (
-                                            <div className="space-y-2 border p-2 rounded-md max-h-48 overflow-y-auto">
+                                            <div className="space-y-2 border p-2 rounded-md h-48 overflow-y-auto">
                                                 {formData.allowedSubjectIds.map((subId, idx) => {
                                                     const sub = subjects.find(s => s.id === subId);
                                                     return (
@@ -218,18 +263,25 @@ export default function TeachersPage() {
                             <div className="space-y-3">
                                 <Label className="text-base font-semibold">Agenda de Indisponibilidade</Label>
                                 <p className="text-sm text-muted-foreground">
-                                    Clique nos blocos para marcar o professor como <span className="text-destructive font-medium">indisponível</span>.
+                                    Clique nos blocos (ou no cabeçalho do dia) para marcar o professor como <span className="text-destructive font-medium">indisponível</span>.
                                 </p>
                                 <div className="border rounded-md overflow-hidden">
-                                    <Table>
+                                    <Table className="table-fixed">
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="w-24 text-center border-r">Aula</TableHead>
+                                                <TableHead className="w-20 text-center border-r">Aula</TableHead>
                                                 {Array.from({ length: settings.daysPerWeek }).map((_, i) => {
                                                     const dayValue = i + 1; // Segunda = 1
                                                     return (
-                                                        <TableHead key={dayValue} className="text-center font-bold">
-                                                            {getDayName(dayValue)}
+                                                        <TableHead key={dayValue} className="p-0 border-r last:border-0 h-10 w-full" style={{ padding: 0 }}>
+                                                            <Button
+                                                                variant="ghost"
+                                                                className="w-full h-full font-bold rounded-none hover:bg-muted/50 justify-center"
+                                                                onClick={() => toggleFullDay(dayValue)}
+                                                                title="Indisponibilizar / Disponibilizar dia inteiro"
+                                                            >
+                                                                {getDayName(dayValue)}
+                                                            </Button>
                                                         </TableHead>
                                                     );
                                                 })}
@@ -238,7 +290,7 @@ export default function TeachersPage() {
                                         <TableBody>
                                             {Array.from({ length: settings.classesPerDay }).map((_, periodIndex) => (
                                                 <TableRow key={periodIndex}>
-                                                    <TableCell className="text-center font-medium bg-muted/30 border-r">
+                                                    <TableCell className="text-center font-medium bg-muted/30 border-r h-14">
                                                         {periodIndex + 1}ª
                                                     </TableCell>
                                                     {Array.from({ length: settings.daysPerWeek }).map((_, i) => {
@@ -246,11 +298,11 @@ export default function TeachersPage() {
                                                         const isUnavailable = formData.unavailableConstraints
                                                             .find(c => c.dayOfWeek === dayValue)?.periods.includes(periodIndex);
                                                         return (
-                                                            <TableCell key={dayValue} className="p-2 border-l">
+                                                            <TableCell key={dayValue} className="p-0 border-l h-14">
                                                                 <Button
                                                                     type="button"
                                                                     variant={isUnavailable ? "destructive" : "outline"}
-                                                                    className={`w-full h-10 transition-colors ${!isUnavailable ? "bg-emerald-500/10 text-emerald-600 border-emerald-200 hover:bg-emerald-500/20 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800" : ""}`}
+                                                                    className={`w-full h-full rounded-none transition-colors ${!isUnavailable ? "bg-emerald-500/10 text-emerald-600 border-none hover:bg-emerald-500/20 dark:bg-emerald-950/20 dark:text-emerald-400" : "border-none"}`}
                                                                     onClick={() => toggleGridCell(dayValue, periodIndex)}
                                                                 >
                                                                     {isUnavailable ? "Indisponível" : "Disponível"}
@@ -280,6 +332,7 @@ export default function TeachersPage() {
                         <TableRow>
                             <TableHead>Nome</TableHead>
                             <TableHead>Máx Aulas</TableHead>
+                            <TableHead>Dá Aula à Tarde?</TableHead>
                             <TableHead className="w-25">Ações</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -288,6 +341,7 @@ export default function TeachersPage() {
                             <TableRow key={t.id}>
                                 <TableCell>{t.name}</TableCell>
                                 <TableCell>{t.maxWeeklyClasses}</TableCell>
+                                <TableCell>{t.canTeachAfternoon ? "Sim" : "Não"}</TableCell>
                                 <TableCell className="flex gap-2">
                                     <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(t)}><Pencil className="h-4 w-4" /></Button>
                                     <DeleteConfirmDialog

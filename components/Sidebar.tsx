@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { BookOpen, Users, Building, Settings as SettingsIcon } from "lucide-react";
+import { BookOpen, Users, Building, Settings as SettingsIcon, TableProperties } from "lucide-react";
 
 const navItems = [
     { href: "/subjects", label: "Matérias", icon: BookOpen },
     { href: "/teachers", label: "Professores", icon: Users },
     { href: "/classrooms", label: "Turmas", icon: Building },
+    { href: "/results", label: "Resultados", icon: TableProperties },
     { href: "/settings", label: "Configurações", icon: SettingsIcon },
 ];
 
