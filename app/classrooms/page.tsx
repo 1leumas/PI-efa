@@ -16,7 +16,9 @@ import { Classroom, ClassroomSubject, ShiftType } from "@/lib/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export default function ClassroomsPage() {
-	const { classrooms, subjects, addClassroom, updateClassroom, deleteClassroom } = useTimetableStore();
+	const { classrooms, subjects, addClassroom, updateClassroom, deleteClassroom, settings } = useTimetableStore();
+
+	const maxWeeklyClasses = settings.classesPerDay * settings.daysPerWeek;
 
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [editingId, setEditingId] = useState<string | null>(null);
@@ -75,6 +77,12 @@ export default function ClassroomsPage() {
 		}
 	};
 
+	const shiftColors: Record<ShiftType, string> = {
+		"Manhã": "text-sky-600 dark:text-sky-400",
+		"Tarde": "text-amber-600 dark:text-amber-400",
+		"Integral": "text-violet-600 dark:text-violet-400",
+	};
+
 	return (
 		<div className="space-y-6">
 			<div className="flex justify-between items-center">
@@ -83,19 +91,26 @@ export default function ClassroomsPage() {
 					<DialogTrigger render={<Button onClick={() => handleOpenDialog()} />}>
 						Adicionar Turma
 					</DialogTrigger>
-					<DialogContent className="sm:max-w-[95vw] md:max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
+					<DialogContent className="sm:max-w-[95vw] md:max-w-3xl lg:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
 						<DialogHeader>
 							<DialogTitle>{editingId ? "Editar Turma" : "Nova Turma"}</DialogTitle>
 						</DialogHeader>
-						<div className="space-y-6 py-4">
+						<div className="space-y-6 py-4 flex-1 overflow-y-auto min-h-0">
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								<div className="space-y-2">
-									<Label className="text-base font-semibold">Nome da Turma</Label>
-									<Input placeholder="Ex: 1º Ano A" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+									<Label>Nome da Turma</Label>
+									<Input
+										placeholder="Ex: 1º Ano A"
+										value={formData.name}
+										onChange={e => setFormData({ ...formData, name: e.target.value })}
+									/>
 								</div>
 								<div className="space-y-2">
-									<Label className="text-base font-semibold">Turno</Label>
-									<Select value={formData.shift} onValueChange={(v) => { if (v) setFormData({ ...formData, shift: v as ShiftType }); }}>
+									<Label>Turno</Label>
+									<Select
+										value={formData.shift}
+										onValueChange={(v) => { if (v) setFormData({ ...formData, shift: v as ShiftType }); }}
+									>
 										<SelectTrigger className="w-full bg-background" size="default">
 											<SelectValue placeholder="Selecione o turno" />
 										</SelectTrigger>
@@ -113,13 +128,16 @@ export default function ClassroomsPage() {
 									</Select>
 								</div>
 							</div>
-							<div className="space-y-4">
-								<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+
+							<div className="space-y-3">
+								<div className="flex flex-wrap items-center justify-between gap-2">
 									<Label className="text-base font-semibold">Disciplinas e Aulas Semanais</Label>
-									<p className="text-sm text-muted-foreground mr-auto sm:ml-4">
-										Selecione a disciplina e defina a carga horária.
-									</p>
+									<span className="text-xs text-muted-foreground">
+										Capacidade máxima: <strong className="text-foreground">{maxWeeklyClasses} aulas/sem</strong>
+										<span className="opacity-60"> ({settings.classesPerDay}/dia × {settings.daysPerWeek} dias)</span>
+									</span>
 								</div>
+
 								{subjects.length === 0 ? (
 									<div className="border border-dashed rounded-md p-8 text-center text-muted-foreground">
 										Nenhuma disciplina cadastrada ainda.
@@ -130,9 +148,13 @@ export default function ClassroomsPage() {
 											const isSelected = formData.selectedSubjects.has(subject.id);
 											const classesCount = formData.selectedSubjects.get(subject.id) || 1;
 											return (
-												<div key={subject.id} className={`flex flex-col p-3 border rounded-md transition-all ${isSelected ? 'bg-background border-primary ring-1 ring-primary/20 shadow-sm' : 'bg-background/50 border-border opacity-70 hover:opacity-100 hover:bg-background'}`}>
+												<div key={subject.id} className={`flex flex-col p-3 border rounded-md transition-all ${isSelected ? "bg-background border-primary ring-1 ring-primary/20 shadow-sm" : "bg-background/50 border-border opacity-70 hover:opacity-100 hover:bg-background"}`}>
 													<div className="flex items-center space-x-3">
-														<Checkbox id={`subject-${subject.id}`} checked={isSelected} onCheckedChange={(c) => toggleSubject(subject.id, c as boolean)} />
+														<Checkbox
+															id={`subject-${subject.id}`}
+															checked={isSelected}
+															onCheckedChange={(c) => toggleSubject(subject.id, c as boolean)}
+														/>
 														<Label htmlFor={`subject-${subject.id}`} className="flex-1 cursor-pointer font-medium leading-tight select-none">
 															{subject.name}
 														</Label>
@@ -161,34 +183,59 @@ export default function ClassroomsPage() {
 									</div>
 								)}
 							</div>
-							<div className="flex justify-end pt-4 border-t">
-								<Button onClick={handleSave} className="min-w-32">Salvar Turma</Button>
-							</div>
+
+						</div>
+						<div className="flex justify-end gap-2 pt-2 border-t shrink-0">
+							<Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+							<Button onClick={handleSave}>Salvar Turma</Button>
 						</div>
 					</DialogContent>
 				</Dialog>
 			</div>
 
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{classrooms.map((c) => (
-					<Card key={c.id}>
-						<CardHeader className="flex flex-row items-center justify-between pb-2">
-							<CardTitle className="text-xl">{c.name}</CardTitle>
-							<div className="flex space-x-1">
-								<Button variant="ghost" size="icon" onClick={() => handleOpenDialog(c)}><Pencil className="h-4 w-4" /></Button>
-								<DeleteConfirmDialog
-									title="Excluir Turma?"
-									description={<>Esta ação não pode ser desfeita. A turma <strong>{c.name}</strong> será apagada permanentemente do sistema.</>}
-									onConfirm={() => { deleteClassroom(c.id); toast.success("Turma excluída!"); }}
-								/>
-							</div>
-						</CardHeader>
-						<CardContent>
-							<p className="text-sm font-medium pb-2 text-primary">{c.shift || 'Manhã'}</p>
-							<p className="text-sm text-muted-foreground">{c.subjects.length} matérias cadastradas.</p>
-						</CardContent>
-					</Card>
-				))}
+				{classrooms.map((c) => {
+					const totalWeekly = c.subjects.reduce((sum, s) => sum + s.weeklyClasses, 0);
+					const shift = c.shift ?? "Manhã";
+					return (
+						<Card key={c.id}>
+							<CardHeader className="flex flex-row items-start justify-between pb-2">
+								<div className="space-y-1">
+									<CardTitle className="text-xl">{c.name}</CardTitle>
+									<span className={`text-sm font-medium ${shiftColors[shift]}`}>{shift}</span>
+								</div>
+								<div className="flex space-x-1 shrink-0">
+									<Button variant="ghost" size="icon" onClick={() => handleOpenDialog(c)}>
+										<Pencil className="h-4 w-4" />
+									</Button>
+									<DeleteConfirmDialog
+										title="Excluir Turma?"
+										description={<>Esta ação não pode ser desfeita. A turma <strong>{c.name}</strong> será apagada permanentemente do sistema.</>}
+										onConfirm={() => { deleteClassroom(c.id); toast.success("Turma excluída!"); }}
+									/>
+								</div>
+							</CardHeader>
+							<CardContent className="space-y-1">
+								<p className="text-sm text-muted-foreground">
+									{c.subjects.length === 0
+										? "Nenhuma disciplina"
+										: `${c.subjects.length} ${c.subjects.length === 1 ? "disciplina" : "disciplinas"}`}
+								</p>
+								{c.subjects.length > 0 && (
+									<p className="text-sm">
+										<span className="font-semibold">{totalWeekly}</span>
+										<span className="text-muted-foreground"> / {maxWeeklyClasses} aulas/sem</span>
+									</p>
+								)}
+							</CardContent>
+						</Card>
+					);
+				})}
+				{classrooms.length === 0 && (
+					<div className="col-span-full flex items-center justify-center p-12 border border-dashed rounded-md text-muted-foreground">
+						Nenhuma turma cadastrada.
+					</div>
+				)}
 			</div>
 		</div>
 	);

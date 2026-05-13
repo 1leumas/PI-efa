@@ -498,7 +498,7 @@ function canPlaceTeacher(context: GeneratorContext, teacher: Teacher, day: numbe
 }
 
 function canTeacherTeachAt(context: GeneratorContext, teacher: Teacher, day: number, period: number) {
-	if (period >= context.classesPerDay && !teacher.canTeachAfternoon) {
+	if (period >= context.classesPerDay && teacher.canTeachAfternoon === false) {
 		return false;
 	}
 
@@ -512,7 +512,7 @@ function canTeacherUseFreedSlot(
 	day: number,
 	period: number,
 ) {
-	if (period >= context.classesPerDay && !teacher.canTeachAfternoon) {
+	if (period >= context.classesPerDay && teacher.canTeachAfternoon === false) {
 		return false;
 	}
 

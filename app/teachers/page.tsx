@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, ChevronUp, ChevronDown } from "lucide-react";
+import { Pencil, ChevronUp, ChevronDown, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -27,7 +27,7 @@ export default function TeachersPage() {
 		canTeachAfternoon: boolean;
 		allowedSubjectIds: string[];
 		unavailableConstraints: TeacherTimeConstraint[];
-	}>({ name: "", maxWeeklyClasses: 20, canTeachAfternoon: false, allowedSubjectIds: [], unavailableConstraints: [] });
+	}>({ name: "", maxWeeklyClasses: 20, canTeachAfternoon: true, allowedSubjectIds: [], unavailableConstraints: [] });
 
 	const handleOpenDialog = (teacher?: Teacher) => {
 		if (teacher) {
@@ -41,23 +41,18 @@ export default function TeachersPage() {
 			});
 		} else {
 			setEditingId(null);
-			setFormData({ name: "", maxWeeklyClasses: 20, canTeachAfternoon: false, allowedSubjectIds: [], unavailableConstraints: [] });
+			setFormData({ name: "", maxWeeklyClasses: 20, canTeachAfternoon: true, allowedSubjectIds: [], unavailableConstraints: [] });
 		}
 		setIsDialogOpen(true);
 	};
 
 	const handleSave = () => {
 		if (!formData.name.trim()) return toast.error("Nome inválido");
-
 		if (editingId) {
 			updateTeacher(editingId, { ...formData, subjectPriorityIds: formData.allowedSubjectIds });
 			toast.success("Professor(a) atualizado!");
 		} else {
-			addTeacher({
-				id: uuidv4(),
-				...formData,
-				subjectPriorityIds: formData.allowedSubjectIds
-			});
+			addTeacher({ id: uuidv4(), ...formData, subjectPriorityIds: formData.allowedSubjectIds });
 			toast.success("Professor(a) adicionado!");
 		}
 		setIsDialogOpen(false);
@@ -68,9 +63,8 @@ export default function TeachersPage() {
 			const allowed = prev.allowedSubjectIds;
 			if (allowed.includes(subjectId)) {
 				return { ...prev, allowedSubjectIds: allowed.filter((id) => id !== subjectId) };
-			} else {
-				return { ...prev, allowedSubjectIds: [...allowed, subjectId] };
 			}
+			return { ...prev, allowedSubjectIds: [...allowed, subjectId] };
 		});
 	};
 
@@ -78,42 +72,31 @@ export default function TeachersPage() {
 		setFormData(prev => {
 			const existing = prev.unavailableConstraints.find(c => c.dayOfWeek === dayValue);
 			const totalPeriods = settings.classesPerDay;
-
-			// if all are unavailable, make them all available.
 			if (existing && existing.periods.length === totalPeriods) {
-				return {
-					...prev,
-					unavailableConstraints: prev.unavailableConstraints.filter(c => c.dayOfWeek !== dayValue)
-				};
+				return { ...prev, unavailableConstraints: prev.unavailableConstraints.filter(c => c.dayOfWeek !== dayValue) };
 			}
-
-			// otherwise, make them all unavailable.
 			const allPeriods = Array.from({ length: totalPeriods }, (_, i) => i);
 			const newConstraints = prev.unavailableConstraints.filter(c => c.dayOfWeek !== dayValue);
 			newConstraints.push({ dayOfWeek: dayValue, periods: allPeriods });
-
-			return {
-				...prev,
-				unavailableConstraints: newConstraints
-			};
+			return { ...prev, unavailableConstraints: newConstraints };
 		});
 	};
 
 	const moveSubjectUp = (index: number) => {
 		if (index === 0) return;
 		setFormData((prev) => {
-			const newAllowed = [...prev.allowedSubjectIds];
-			[newAllowed[index - 1], newAllowed[index]] = [newAllowed[index], newAllowed[index - 1]];
-			return { ...prev, allowedSubjectIds: newAllowed };
+			const arr = [...prev.allowedSubjectIds];
+			[arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+			return { ...prev, allowedSubjectIds: arr };
 		});
 	};
 
 	const moveSubjectDown = (index: number) => {
 		if (index === formData.allowedSubjectIds.length - 1) return;
 		setFormData((prev) => {
-			const newAllowed = [...prev.allowedSubjectIds];
-			[newAllowed[index], newAllowed[index + 1]] = [newAllowed[index + 1], newAllowed[index]];
-			return { ...prev, allowedSubjectIds: newAllowed };
+			const arr = [...prev.allowedSubjectIds];
+			[arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
+			return { ...prev, allowedSubjectIds: arr };
 		});
 	};
 
@@ -122,30 +105,26 @@ export default function TeachersPage() {
 			const existing = prev.unavailableConstraints.find(c => c.dayOfWeek === day);
 			if (existing) {
 				const p = existing.periods;
-				let newPeriods;
-				if (p.includes(period)) {
-					newPeriods = p.filter(x => x !== period);
-				} else {
-					newPeriods = [...p, period].sort();
-				}
+				const newPeriods = p.includes(period) ? p.filter(x => x !== period) : [...p, period].sort((a, b) => a - b);
 				return {
 					...prev,
 					unavailableConstraints: prev.unavailableConstraints
 						.map(c => c.dayOfWeek === day ? { ...c, periods: newPeriods } : c)
-						.filter(c => c.periods.length > 0)
-				};
-			} else {
-				return {
-					...prev,
-					unavailableConstraints: [...prev.unavailableConstraints, { dayOfWeek: day, periods: [period] }]
+						.filter(c => c.periods.length > 0),
 				};
 			}
+			return { ...prev, unavailableConstraints: [...prev.unavailableConstraints, { dayOfWeek: day, periods: [period] }] };
 		});
 	};
 
 	const getDayName = (dayValue: number) => {
+		const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+		return days[dayValue] ?? `D${dayValue}`;
+	};
+
+	const getDayFullName = (dayValue: number) => {
 		const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-		return days[dayValue] || "";
+		return days[dayValue] ?? `Dia ${dayValue}`;
 	};
 
 	return (
@@ -154,95 +133,102 @@ export default function TeachersPage() {
 				<h1 className="text-3xl font-bold tracking-tight">Corpo Docente</h1>
 				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 					<DialogTrigger render={<Button onClick={() => handleOpenDialog()} />}>
+						<PlusCircle className="mr-2 h-4 w-4" />
 						Adicionar Professor
 					</DialogTrigger>
-					<DialogContent className="sm:max-w-[95vw] w-[95vw] h-[95vh] overflow-y-auto overflow-x-hidden">
+					<DialogContent className="sm:max-w-[95vw] w-[95vw] h-[95vh] flex flex-col overflow-hidden">
 						<DialogHeader>
 							<DialogTitle>{editingId ? "Editar Professor" : "Novo Professor"}</DialogTitle>
 						</DialogHeader>
-						<div className="space-y-6 py-4">
+						<div className="space-y-6 py-4 flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+
+							{/* Dados básicos */}
 							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 								<div className="space-y-2">
 									<Label>Nome</Label>
-									<Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+									<Input
+										placeholder="Ex: Maria Silva"
+										value={formData.name}
+										onChange={e => setFormData({ ...formData, name: e.target.value })}
+									/>
 								</div>
 								<div className="space-y-2">
-									<Label>Máximo de Aulas / Semana</Label>
-									<Input type="number" min="1" value={formData.maxWeeklyClasses} onChange={e => setFormData({ ...formData, maxWeeklyClasses: parseInt(e.target.value) || 20 })} />
+									<Label>Máx. aulas / semana</Label>
+									<Input
+										type="number"
+										min="1"
+										value={formData.maxWeeklyClasses}
+										onChange={e => setFormData({ ...formData, maxWeeklyClasses: parseInt(e.target.value) || 20 })}
+									/>
 								</div>
-								<div className="space-y-2 flex flex-col justify-center">
-									<Label>Tempo Integral</Label>
-									<div className="flex items-center space-x-2 pt-2">
+								<div className="flex flex-col justify-end pb-0.5">
+									<div className="flex items-center space-x-2 h-9">
 										<Checkbox
 											id="can-teach-afternoon"
 											checked={formData.canTeachAfternoon}
 											onCheckedChange={(c) => setFormData({ ...formData, canTeachAfternoon: !!c })}
 										/>
-										<Label htmlFor="can-teach-afternoon" className="cursor-pointer font-normal text-sm">Pode lecionar à tarde</Label>
+										<Label htmlFor="can-teach-afternoon" className="cursor-pointer font-normal text-sm">
+											Pode lecionar à tarde
+										</Label>
 									</div>
 								</div>
 							</div>
 
-							<div className="space-y-4">
-								<Label className="text-base font-semibold">Disciplinas e Prioridade</Label>
-								<div className="grid grid-cols-2 gap-6">
-									<div className="space-y-3">
-										<Label className="text-sm text-muted-foreground">Selecione as disciplinas:</Label>
+							{/* Disciplinas */}
+							<div className="space-y-3">
+								<Label className="text-base font-semibold">Disciplinas</Label>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+									<div className="space-y-2">
+										<Label className="text-sm text-muted-foreground">Quais disciplinas leciona:</Label>
 										{subjects.length === 0 ? (
-											<p className="text-sm text-muted-foreground">Nenhuma disciplina cadastrada.</p>
+											<p className="text-sm text-muted-foreground border border-dashed rounded-md p-3 text-center">
+												Nenhuma disciplina cadastrada.
+											</p>
 										) : (
-											<div className="grid grid-cols-1 gap-4 p-4 rounded-md max-h-48">
-												<DropdownMenu>
-													<DropdownMenuTrigger render={<Button variant="outline" className="w-full justify-between bg-background" />}>
-														Selecionar Disciplinas ({formData.allowedSubjectIds.length})
-														<ChevronDown className="h-4 w-4 opacity-50" />
-													</DropdownMenuTrigger>
-													<DropdownMenuContent className="w-56" align="start">
-														{subjects.map((subject) => (
-															<DropdownMenuCheckboxItem
-																key={subject.id}
-																checked={formData.allowedSubjectIds.includes(subject.id)}
-																onCheckedChange={() => toggleSubject(subject.id)}
-															>
-																{subject.name}
-															</DropdownMenuCheckboxItem>
-														))}
-													</DropdownMenuContent>
-												</DropdownMenu>
-											</div>
+											<DropdownMenu>
+												<DropdownMenuTrigger render={<Button variant="outline" className="w-full justify-between bg-background" />}>
+													{formData.allowedSubjectIds.length === 0
+														? "Selecionar disciplinas…"
+														: `${formData.allowedSubjectIds.length} disciplina(s) selecionada(s)`}
+													<ChevronDown className="h-4 w-4 opacity-50" />
+												</DropdownMenuTrigger>
+												<DropdownMenuContent className="w-56" align="start">
+													{subjects.map((subject) => (
+														<DropdownMenuCheckboxItem
+															key={subject.id}
+															checked={formData.allowedSubjectIds.includes(subject.id)}
+															onCheckedChange={() => toggleSubject(subject.id)}
+														>
+															{subject.name}
+														</DropdownMenuCheckboxItem>
+													))}
+												</DropdownMenuContent>
+											</DropdownMenu>
 										)}
 									</div>
-									<div className="space-y-3">
-										<Label className="text-sm text-muted-foreground">Ordem de Prioridade:</Label>
+									<div className="space-y-2">
+										<Label className="text-sm text-muted-foreground">
+											Prioridade <span className="font-normal opacity-60">(reordene com as setas)</span>:
+										</Label>
 										{formData.allowedSubjectIds.length === 0 ? (
-											<div className="border border-dashed rounded-md p-4 text-center text-sm text-muted-foreground h-48 flex items-center justify-center">
-												Selecione disciplinas ao lado para definir prioridade.
+											<div className="border border-dashed rounded-md p-3 text-center text-sm text-muted-foreground h-[72px] flex items-center justify-center">
+												Selecione disciplinas ao lado
 											</div>
 										) : (
-											<div className="space-y-2 border p-2 rounded-md h-48 overflow-y-auto">
+											<div className="space-y-1 border rounded-md p-2 max-h-40 overflow-y-auto">
 												{formData.allowedSubjectIds.map((subId, idx) => {
 													const sub = subjects.find(s => s.id === subId);
 													return (
-														<div key={subId} className="flex items-center justify-between bg-muted/50 p-2 rounded-md">
-															<span className="text-sm px-2 truncate">{sub?.name || "Desconhecida"}</span>
-															<div className="flex bg-background border rounded-md">
-																<Button
-																	variant="ghost"
-																	size="icon"
-																	className="h-6 w-6"
-																	disabled={idx === 0}
-																	onClick={(e) => { e.preventDefault(); moveSubjectUp(idx); }}
-																>
-																	<ChevronUp className="h-4 w-4" />
+														<div key={subId} className="flex items-center justify-between bg-muted/30 px-2 py-1 rounded text-sm">
+															<span className="text-xs text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
+															<span className="truncate flex-1 mx-1">{sub?.name ?? "—"}</span>
+															<div className="flex shrink-0">
+																<Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === 0} onClick={(e) => { e.preventDefault(); moveSubjectUp(idx); }}>
+																	<ChevronUp className="h-3 w-3" />
 																</Button>
-																<Button
-																	variant="ghost"
-																	size="icon"
-																	className="h-6 w-6"
-																	disabled={idx === formData.allowedSubjectIds.length - 1}
-																	onClick={(e) => { e.preventDefault(); moveSubjectDown(idx); }}
-																>
-																	<ChevronDown className="h-4 w-4" />
+																<Button variant="ghost" size="icon" className="h-5 w-5" disabled={idx === formData.allowedSubjectIds.length - 1} onClick={(e) => { e.preventDefault(); moveSubjectDown(idx); }}>
+																	<ChevronDown className="h-3 w-3" />
 																</Button>
 															</div>
 														</div>
@@ -254,25 +240,42 @@ export default function TeachersPage() {
 								</div>
 							</div>
 
+							{/* Grade de indisponibilidade */}
 							<div className="space-y-3">
-								<Label className="text-base font-semibold">Agenda de Indisponibilidade</Label>
-								<p className="text-sm text-muted-foreground">
-									Clique nos blocos (ou no cabeçalho do dia) para marcar o professor como <span className="text-destructive font-medium">indisponível</span>.
-								</p>
-								<div className="border rounded-md overflow-hidden">
-									<Table className="table-fixed">
+								<div className="flex flex-wrap items-center justify-between gap-2">
+									<div>
+										<Label className="text-base font-semibold">Indisponibilidade</Label>
+										<p className="text-xs text-muted-foreground mt-0.5">
+											Clique nas células para marcar quando o professor <strong>não pode</strong> dar aula.
+											Clique no nome do dia para bloquear o dia inteiro.
+										</p>
+									</div>
+									<div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+										<span className="flex items-center gap-1.5">
+											<span className="inline-block w-3 h-3 rounded-sm bg-emerald-500/25 border border-emerald-500/50" />
+											Disponível
+										</span>
+										<span className="flex items-center gap-1.5">
+											<span className="inline-block w-3 h-3 rounded-sm bg-destructive/20 border border-destructive/50" />
+											Indisponível
+										</span>
+									</div>
+								</div>
+
+								<div className="border rounded-md overflow-auto">
+									<Table className="table-fixed min-w-max">
 										<TableHeader>
 											<TableRow>
-												<TableHead className="w-20 text-center border-r">Aula</TableHead>
+												<TableHead className="w-14 text-center border-r text-xs">Aula</TableHead>
 												{Array.from({ length: settings.daysPerWeek }).map((_, i) => {
-													const dayValue = i + 1; // Segunda = 1
+													const dayValue = i + 1;
 													return (
-														<TableHead key={dayValue} className="p-0 border-r last:border-0 h-10 w-full" style={{ padding: 0 }}>
+														<TableHead key={dayValue} className="p-0 border-r last:border-0 min-w-[72px]">
 															<Button
 																variant="ghost"
-																className="w-full h-full font-bold rounded-none hover:bg-muted/50 justify-center"
+																className="w-full h-full font-semibold rounded-none hover:bg-muted/50 justify-center text-xs py-2"
 																onClick={() => toggleFullDay(dayValue)}
-																title="Indisponibilizar / Disponibilizar dia inteiro"
+																title={`Bloquear/liberar ${getDayFullName(dayValue)}`}
 															>
 																{getDayName(dayValue)}
 															</Button>
@@ -282,73 +285,149 @@ export default function TeachersPage() {
 											</TableRow>
 										</TableHeader>
 										<TableBody>
+											{/* Manhã */}
+											<TableRow>
+												<TableCell
+													colSpan={settings.daysPerWeek + 1}
+													className="py-1 px-3 bg-sky-50 dark:bg-sky-950/20 text-sky-700 dark:text-sky-400 text-[10px] font-semibold uppercase tracking-widest border-b"
+												>
+													Manhã
+												</TableCell>
+											</TableRow>
 											{Array.from({ length: settings.classesPerDay }).map((_, periodIndex) => (
-												<TableRow key={periodIndex}>
-													<TableCell className="text-center font-medium bg-muted/30 border-r h-14">
+												<TableRow key={`m-${periodIndex}`}>
+													<TableCell className="text-center text-xs font-medium border-r h-9 bg-muted/10">
 														{periodIndex + 1}ª
 													</TableCell>
 													{Array.from({ length: settings.daysPerWeek }).map((_, i) => {
 														const dayValue = i + 1;
-														const isUnavailable = formData.unavailableConstraints
+														const isUnavailable = !!formData.unavailableConstraints
 															.find(c => c.dayOfWeek === dayValue)?.periods.includes(periodIndex);
 														return (
-															<TableCell key={dayValue} className="p-0 border-l h-14">
+															<TableCell key={dayValue} className="p-0 border-l h-9">
 																<Button
 																	type="button"
-																	variant={isUnavailable ? "destructive" : "outline"}
-																	className={`w-full h-full rounded-none transition-colors ${!isUnavailable ? "bg-emerald-500/10 text-emerald-600 border-none hover:bg-emerald-500/20 dark:bg-emerald-950/20 dark:text-emerald-400" : "border-none"}`}
+																	variant={isUnavailable ? "destructive" : "ghost"}
+																	className={`w-full h-9 rounded-none border-none transition-colors ${!isUnavailable ? "bg-emerald-500/15 hover:bg-emerald-500/25" : ""}`}
 																	onClick={() => toggleGridCell(dayValue, periodIndex)}
-																>
-																	{isUnavailable ? "Indisponível" : "Disponível"}
-																</Button>
+																/>
 															</TableCell>
 														);
 													})}
 												</TableRow>
 											))}
+
+											{/* Tarde */}
+											<TableRow>
+												<TableCell
+													colSpan={settings.daysPerWeek + 1}
+													className={`py-1 px-3 text-[10px] font-semibold uppercase tracking-widest border-b border-t ${
+														formData.canTeachAfternoon
+															? "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400"
+															: "bg-muted/20 text-muted-foreground"
+													}`}
+												>
+													Tarde
+													{!formData.canTeachAfternoon && (
+														<span className="font-normal normal-case tracking-normal opacity-60 ml-1">
+															— habilite &quot;Pode lecionar à tarde&quot;
+														</span>
+													)}
+												</TableCell>
+											</TableRow>
+											{Array.from({ length: settings.classesPerDay }).map((_, periodIndex) => {
+												const actualPeriod = settings.classesPerDay + periodIndex;
+												const canAfternoon = formData.canTeachAfternoon;
+												return (
+													<TableRow key={`a-${periodIndex}`} className={!canAfternoon ? "opacity-40 pointer-events-none" : ""}>
+														<TableCell className="text-center text-xs font-medium border-r h-9 bg-muted/10">
+															{periodIndex + 1}ª
+														</TableCell>
+														{Array.from({ length: settings.daysPerWeek }).map((_, i) => {
+															const dayValue = i + 1;
+															const isUnavailable = !!formData.unavailableConstraints
+																.find(c => c.dayOfWeek === dayValue)?.periods.includes(actualPeriod);
+															return (
+																<TableCell key={dayValue} className="p-0 border-l h-9">
+																	<Button
+																		type="button"
+																		variant={isUnavailable ? "destructive" : "ghost"}
+																		disabled={!canAfternoon}
+																		className={`w-full h-9 rounded-none border-none transition-colors ${!isUnavailable ? "bg-emerald-500/15 hover:bg-emerald-500/25" : ""}`}
+																		onClick={() => toggleGridCell(dayValue, actualPeriod)}
+																	/>
+																</TableCell>
+															);
+														})}
+													</TableRow>
+												);
+											})}
 										</TableBody>
 									</Table>
 								</div>
 							</div>
 
-							<div className="flex justify-end space-x-2 pt-4">
-								<Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-								<Button onClick={handleSave}>Salvar Configurações</Button>
-							</div>
+						</div>
+						<div className="flex justify-end gap-2 pt-2 border-t shrink-0">
+							<Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+							<Button onClick={handleSave}>Salvar</Button>
 						</div>
 					</DialogContent>
 				</Dialog>
 			</div>
 
+			{/* Tabela de professores */}
 			<div className="border rounded-md">
 				<Table>
 					<TableHeader>
 						<TableRow>
 							<TableHead>Nome</TableHead>
-							<TableHead>Máx Aulas</TableHead>
-							<TableHead>Dá Aula à Tarde?</TableHead>
-							<TableHead className="w-25">Ações</TableHead>
+							<TableHead>Disciplinas</TableHead>
+							<TableHead className="w-24">Máx/Sem</TableHead>
+							<TableHead className="w-16">Tarde</TableHead>
+							<TableHead className="w-20">Ações</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{teachers.map((t) => (
-							<TableRow key={t.id}>
-								<TableCell>{t.name}</TableCell>
-								<TableCell>{t.maxWeeklyClasses}</TableCell>
-								<TableCell>{t.canTeachAfternoon ? "Sim" : "Não"}</TableCell>
-								<TableCell className="flex gap-2">
-									<Button variant="ghost" size="icon" onClick={() => handleOpenDialog(t)}><Pencil className="h-4 w-4" /></Button>
-									<DeleteConfirmDialog
-										title="Excluir Professor(a)?"
-										description={<>Esta ação não pode ser desfeita. O(A) professor(a) <strong>{t.name}</strong> será apagado(a) permanentemente.</>}
-										onConfirm={() => { deleteTeacher(t.id); toast.success("Professor(a) excluído(a)!"); }}
-									/>
-								</TableCell>
-							</TableRow>
-						))}
+						{teachers.map((t) => {
+							const subjectNames = (t.allowedSubjectIds ?? [])
+								.map(id => subjects.find(s => s.id === id)?.name)
+								.filter(Boolean) as string[];
+							return (
+								<TableRow key={t.id}>
+									<TableCell className="font-medium">{t.name}</TableCell>
+									<TableCell>
+										{subjectNames.length === 0 ? (
+											<span className="text-xs text-muted-foreground italic">Nenhuma</span>
+										) : (
+											<div className="flex flex-wrap gap-1">
+												{subjectNames.slice(0, 3).map((name, i) => (
+													<span key={i} className="text-xs bg-muted px-1.5 py-0.5 rounded">{name}</span>
+												))}
+												{subjectNames.length > 3 && (
+													<span className="text-xs text-muted-foreground">+{subjectNames.length - 3}</span>
+												)}
+											</div>
+										)}
+									</TableCell>
+									<TableCell>{t.maxWeeklyClasses}</TableCell>
+									<TableCell>{t.canTeachAfternoon ? "Sim" : "Não"}</TableCell>
+									<TableCell className="flex gap-1">
+										<Button variant="ghost" size="icon" onClick={() => handleOpenDialog(t)}>
+											<Pencil className="h-4 w-4" />
+										</Button>
+										<DeleteConfirmDialog
+											title="Excluir Professor(a)?"
+											description={<>Esta ação não pode ser desfeita. O(A) professor(a) <strong>{t.name}</strong> será apagado(a) permanentemente.</>}
+											onConfirm={() => { deleteTeacher(t.id); toast.success("Professor(a) excluído(a)!"); }}
+										/>
+									</TableCell>
+								</TableRow>
+							);
+						})}
 						{teachers.length === 0 && (
 							<TableRow>
-								<TableCell colSpan={3} className="text-center text-muted-foreground h-24">
+								<TableCell colSpan={5} className="text-center text-muted-foreground h-24">
 									Nenhum professor cadastrado.
 								</TableCell>
 							</TableRow>

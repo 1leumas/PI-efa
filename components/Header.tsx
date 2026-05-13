@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Moon, Sun, Download, Upload } from "lucide-react";
 import { useTheme } from "next-themes";
 import { ChangeEvent, useState, useRef } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { generateTimetable } from "@/lib/generator";
 import { useRouter } from "next/navigation";
@@ -127,48 +127,42 @@ export function Header() {
 					<DialogHeader>
 						<DialogTitle>Importar Dados</DialogTitle>
 						<DialogDescription>
-							Selecione um arquivo JSON de backup para importar as configurações, disciplinas, turmas e professores.
+							Selecione um arquivo JSON exportado anteriormente pelo sistema.
 						</DialogDescription>
 					</DialogHeader>
 
 					<div className="py-4 space-y-4">
-						<div className="flex flex-col gap-2">
-							<input
-								type="file"
-								accept=".json"
-								ref={fileInputRef}
-								onChange={handleFileChange}
-								className="hidden"
-							/>
-							<Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
-								{importFile ? importFile.name : "Selecionar Arquivo JSON"}
+						<input
+							type="file"
+							accept=".json"
+							ref={fileInputRef}
+							onChange={handleFileChange}
+							className="hidden"
+						/>
+						<Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
+							<Upload className="mr-2 h-4 w-4" />
+							{importFile ? importFile.name : "Selecionar arquivo JSON…"}
+						</Button>
+
+						{importFile && (
+							<div className="rounded-md border bg-muted/30 p-3 text-sm space-y-1.5 text-muted-foreground">
+								<p><strong className="text-foreground">Mesclar</strong> — adiciona apenas itens novos; mantém os dados existentes.</p>
+								<p><strong className="text-foreground">Substituir Tudo</strong> — apaga todos os dados atuais e importa somente o arquivo selecionado.</p>
+							</div>
+						)}
+					</div>
+
+					<div className="flex justify-between gap-2 pt-2 border-t">
+						<Button variant="ghost" onClick={() => setImportModalOpen(false)}>Cancelar</Button>
+						<div className="flex gap-2">
+							<Button variant="outline" disabled={!importFile} onClick={() => handleImport('merge')}>
+								Mesclar
+							</Button>
+							<Button variant="destructive" disabled={!importFile} onClick={() => handleImport('replace')}>
+								Substituir Tudo
 							</Button>
 						</div>
 					</div>
-
-					<DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 sm:justify-between items-center">
-						<Button variant="ghost" onClick={() => setImportModalOpen(false)} className="w-full sm:w-auto">
-							Cancelar
-						</Button>
-						<div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-							<Button
-								variant="destructive"
-								disabled={!importFile}
-								onClick={() => handleImport('replace')}
-								className="w-full sm:w-auto bg-destructive/90 text-white"
-							>
-								Substituir Tudo
-							</Button>
-							<Button
-								variant="secondary"
-								disabled={!importFile}
-								onClick={() => handleImport('merge')}
-								className="w-full sm:w-auto"
-							>
-								Mesclar
-							</Button>
-						</div>
-					</DialogFooter>
 				</DialogContent>
 			</Dialog>
 		</header>
