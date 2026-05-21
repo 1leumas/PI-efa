@@ -262,15 +262,15 @@ export default function TeachersPage() {
 									</div>
 								</div>
 
-								<div className="border rounded-md overflow-auto">
-									<Table className="table-fixed min-w-max">
+								<div className="border rounded-md overflow-auto w-full">
+									<Table className="table-fixed w-full">
 										<TableHeader>
 											<TableRow>
 												<TableHead className="w-14 text-center border-r text-xs">Aula</TableHead>
 												{Array.from({ length: settings.daysPerWeek }).map((_, i) => {
 													const dayValue = i + 1;
 													return (
-														<TableHead key={dayValue} className="p-0 border-r last:border-0 min-w-[72px]">
+														<TableHead key={dayValue} className="p-0 border-r last:border-0">
 															<Button
 																variant="ghost"
 																className="w-full h-full font-semibold rounded-none hover:bg-muted/50 justify-center text-xs py-2"
