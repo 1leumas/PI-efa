@@ -17,12 +17,12 @@ export function Sidebar() {
 	const pathname = usePathname();
 
 	return (
-		<aside className="w-64 border-r bg-background flex flex-col md:flex">
-			<div className="h-14 flex items-center border-b px-4">
+		<aside className="flex w-full flex-col border-b bg-background md:w-64 md:border-r md:border-b-0">
+			<div className="flex h-14 items-center border-b px-4">
 				<span className="font-bold text-lg">Gerador de Horários</span>
 			</div>
-			<nav className="flex-1 overflow-y-auto py-4">
-				<ul className="grid gap-1 px-2">
+			<nav className="overflow-x-auto py-2 md:flex-1 md:overflow-y-auto md:py-4">
+				<ul className="flex gap-1 px-2 md:grid">
 					{navItems.map((item) => {
 						const Icon = item.icon;
 						const isActive = pathname.startsWith(item.href);
@@ -31,7 +31,7 @@ export function Sidebar() {
 								<Link
 									href={item.href}
 									className={cn(
-										"flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+										"flex shrink-0 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
 										isActive
 											? "bg-primary text-primary-foreground"
 											: "hover:bg-muted"

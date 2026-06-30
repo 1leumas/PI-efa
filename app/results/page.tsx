@@ -4,12 +4,13 @@ import { useTimetableStore } from "@/store/timetableStore";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Clock, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Clock, AlertTriangle, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { MissingClass, TimetableClassroomResult, TimetableSlot } from "@/lib/types";
+import { downloadResultsExcel, getPeriodsToRender } from "@/lib/exportResults";
 
 export default function ResultsPage() {
 	const { timetableResult, classrooms, subjects, teachers, settings } = useTimetableStore();
@@ -19,10 +20,8 @@ export default function ResultsPage() {
 	useEffect(() => {
 		if (!timetableResult) {
 			router.push("/");
-		} else if (timetableResult.length > 0 && !selectedId) {
-			setSelectedId(timetableResult[0].classroomId);
 		}
-	}, [timetableResult, router, selectedId]);
+	}, [timetableResult, router]);
 
 	const getSubjectName = (id: string) => subjects.find(s => s.id === id)?.name || "—";
 	const getTeacherName = (id: string) => teachers.find(t => t.id === id)?.name || "Sem prof.";
@@ -35,25 +34,15 @@ export default function ResultsPage() {
 
 	if (!timetableResult) return null;
 
-	const activeResult = timetableResult.find(tt => tt.classroomId === selectedId) ?? timetableResult[0];
+	const activeId = timetableResult.some(tt => tt.classroomId === selectedId)
+		? selectedId
+		: timetableResult[0]?.classroomId;
+	const activeResult = timetableResult.find(tt => tt.classroomId === activeId) ?? timetableResult[0];
+	const handleExportExcel = () => downloadResultsExcel({ timetableResult, classrooms, subjects, teachers, settings });
 
 	const renderTimetable = (tt: TimetableClassroomResult) => {
 		const shift = tt.shift || classrooms.find(c => c.id === tt.classroomId)?.shift || "Manhã";
-
-		let startPeriod = 0;
-		let endPeriod = settings.classesPerDay;
-
-		if (shift === "Tarde") {
-			startPeriod = settings.classesPerDay;
-			endPeriod = settings.classesPerDay * 2;
-		} else if (shift === "Integral") {
-			endPeriod = settings.classesPerDay * 2;
-		}
-
-		const periodsToRender: number[] = [];
-		for (let p = startPeriod; p < endPeriod; p++) {
-			periodsToRender.push(p);
-		}
+		const periodsToRender = getPeriodsToRender(shift, settings.classesPerDay);
 
 		return (
 			<Card className="overflow-hidden shadow-sm">
@@ -158,6 +147,10 @@ export default function ResultsPage() {
 						{timetableResult.length} {timetableResult.length === 1 ? "turma gerada" : "turmas geradas"}
 					</p>
 				</div>
+				<Button variant="outline" onClick={handleExportExcel} disabled={timetableResult.length === 0}>
+					<Download data-icon="inline-start" />
+					Exportar Excel
+				</Button>
 			</div>
 
 			{timetableResult.length === 0 ? (
@@ -170,7 +163,7 @@ export default function ResultsPage() {
 					<div className="flex flex-wrap gap-2 border-b pb-4">
 						{timetableResult.map((tt) => {
 							const hasMissing = tt.missingClasses && tt.missingClasses.length > 0;
-							const isActive = tt.classroomId === (selectedId ?? timetableResult[0].classroomId);
+							const isActive = tt.classroomId === activeId;
 							return (
 								<button
 									key={tt.classroomId}

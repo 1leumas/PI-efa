@@ -24,7 +24,7 @@ export default function RootLayout({
 	  className={`${inter.className} h-full antialiased`}
 	  suppressHydrationWarning
 	>
-	  <body className="min-h-full flex flex-row">
+	  <body className="min-h-full flex flex-col md:flex-row">
 		<ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
 		  <Sidebar />
 		  <div className="flex flex-1 flex-col overflow-hidden">
