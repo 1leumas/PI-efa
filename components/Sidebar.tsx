@@ -19,7 +19,7 @@ export function Sidebar() {
 	return (
 		<aside className="flex w-full flex-col border-b bg-background md:w-64 md:border-r md:border-b-0">
 			<div className="flex h-14 items-center border-b px-4">
-				<span className="font-bold text-lg">Gerador de Horários</span>
+				<span className="font-bold text-lg">ClassHub</span>
 			</div>
 			<nav className="overflow-x-auto py-2 md:flex-1 md:overflow-y-auto md:py-4">
 				<ul className="flex gap-1 px-2 md:grid">

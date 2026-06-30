@@ -9,8 +9,8 @@ import { Toaster } from "@/components/ui/sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Gerador de Horários",
-  description: "Gerador automatizado de horários escolares",
+  title: "ClassHub",
+  description: "ClassHub - gerador automatizado de horários escolares",
 };
 
 export default function RootLayout({

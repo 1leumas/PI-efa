@@ -83,7 +83,7 @@ export function Header() {
 	return (
 		<header className="h-14 flex items-center justify-between border-b px-4 bg-background md:px-6">
 			<div className="hidden items-center md:flex">
-				<span className="font-bold text-lg">Horários</span>
+				<span className="font-bold text-lg">ClassHub</span>
 			</div>
 			<div className="flex-1" />
 			<div className="flex items-center gap-2 md:gap-4">
