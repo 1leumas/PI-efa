@@ -44,5 +44,6 @@ export function normalizeSettings(settings: Partial<Settings>, fallback?: Settin
 			fallback?.maxClassesPerSubjectPerDay ?? SETTINGS_LIMITS.minClassesPerSubjectPerDay,
 		),
 		integralShiftPriority: settings.integralShiftPriority ?? fallback?.integralShiftPriority,
+		preferDoublePeriods: settings.preferDoublePeriods ?? fallback?.preferDoublePeriods ?? true,
 	};
 }

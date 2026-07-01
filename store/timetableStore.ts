@@ -8,6 +8,7 @@ const defaultSettings: Settings = {
 	daysPerWeek: 5,
 	maxClassesPerSubjectPerDay: 2,
 	integralShiftPriority: 'Manhã',
+	preferDoublePeriods: true,
 };
 
 export const useTimetableStore = create<TimetableState>()(

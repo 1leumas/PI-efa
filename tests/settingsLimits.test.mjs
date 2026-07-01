@@ -34,6 +34,7 @@ test("normalizeSettings caps global timetable settings", async () => {
 		daysPerWeek: 7,
 		maxClassesPerSubjectPerDay: 20,
 		integralShiftPriority: "Tarde",
+		preferDoublePeriods: true,
 	}),
   );
 });

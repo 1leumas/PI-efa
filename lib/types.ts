@@ -3,6 +3,7 @@ export interface Settings {
 	daysPerWeek: number; // e.g., 5 for Mon-Fri
 	maxClassesPerSubjectPerDay: number;
 	integralShiftPriority?: 'Manhã' | 'Tarde';
+	preferDoublePeriods?: boolean; // agrupa aulas da mesma matéria em tempos seguidos (geminadas)
 }
 
 export interface Subject {

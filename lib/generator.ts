@@ -42,6 +42,7 @@ type GeneratorContext = {
 	classesPerDay: number;
 	daysPerWeek: number;
 	maxClassesPerSubjectPerDay: number;
+	preferDoublePeriods: boolean;
 	teacherLoads: Record<string, number>;
 	teacherSchedule: Record<string, boolean[][]>;
 	teachersById: Map<string, Teacher>;
@@ -83,6 +84,7 @@ export function generateTimetable(state: TimetableState) {
 		daysPerWeek,
 		maxClassesPerSubjectPerDay,
 		settings.integralShiftPriority || "Manhã",
+		settings.preferDoublePeriods !== false,
 	);
 	const tasks = createCourseTasks(context, classrooms, teachers);
 
@@ -119,11 +121,13 @@ function createContext(
 	daysPerWeek: number,
 	maxClassesPerSubjectPerDay: number,
 	integralShiftPriority: "Manhã" | "Tarde",
+	preferDoublePeriods: boolean,
 ): GeneratorContext {
 	const context: GeneratorContext = {
 		classesPerDay,
 		daysPerWeek,
 		maxClassesPerSubjectPerDay,
+		preferDoublePeriods,
 		teacherLoads: {},
 		teacherSchedule: {},
 		teachersById: new Map(teachers.map((teacher) => [teacher.id, teacher])),
@@ -564,7 +568,26 @@ function scoreSlot(
 	const dayLoad = runtime.result.schedule[day].filter(Boolean).length;
 	const periodRank = runtime.periodOrder.indexOf(period);
 
-	return subjectCount * 1000 + dayLoad * 20 + context.teacherLoads[teacherId] * 5 + periodRank;
+	// Geminadas: se houver uma aula da mesma matéria imediatamente antes ou depois
+	// (na ordem de períodos da turma), premiamos esse slot para que os tempos fiquem
+	// colados. O bônus (-2500) supera a multa de repetição no mesmo dia (subjectCount*1000),
+	// então o 2º tempo prefere encostar no 1º em vez de ir para um dia "vazio".
+	// O limite por dia continua sendo respeitado por maxClassesPerSubjectPerDay.
+	let geminadaBonus = 0;
+
+	if (context.preferDoublePeriods) {
+		const rank = periodRank;
+		const prevPeriod = rank > 0 ? runtime.periodOrder[rank - 1] : null;
+		const nextPeriod = rank < runtime.periodOrder.length - 1 ? runtime.periodOrder[rank + 1] : null;
+		const before = prevPeriod !== null ? runtime.result.schedule[day][prevPeriod] : null;
+		const after = nextPeriod !== null ? runtime.result.schedule[day][nextPeriod] : null;
+
+		if (before?.subjectId === subjectId || after?.subjectId === subjectId) {
+			geminadaBonus = -2500;
+		}
+	}
+
+	return subjectCount * 1000 + geminadaBonus + dayLoad * 20 + context.teacherLoads[teacherId] * 5 + periodRank;
 }
 
 function countSubjectOnDay(runtime: ClassroomRuntime, day: number, subjectId: string) {
@@ -594,6 +617,7 @@ function cloneContext(context: GeneratorContext): GeneratorContext {
 		classesPerDay: context.classesPerDay,
 		daysPerWeek: context.daysPerWeek,
 		maxClassesPerSubjectPerDay: context.maxClassesPerSubjectPerDay,
+		preferDoublePeriods: context.preferDoublePeriods,
 		teacherLoads: { ...context.teacherLoads },
 		teachersById: context.teachersById,
 		teacherSchedule: Object.fromEntries(
